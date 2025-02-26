@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Weather ni Ronel/Yujin/Johmel</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css" />
+    
+    <script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"></script>
+    <style>
+       
+        body {
+
+            font-family: 'Poppins', sans-serif;
+    text-align: center;
+    background-image: url('forest.jpg');
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+    background-attachment: fixed;
+    color: rgb(0, 255, 242); /* Change text color to white for contrast */
+    margin: 0;
+    padding: 0;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+    flex-direction: column;
+
+            
+        }
+
+        }
+        .text-container {
+    background: #74f342; /* Green background */
+    color: white; /* White text for contrast */
+    padding: 10px 15px;
+    border-radius: 8px;
+    display: inline-block;
+    font-size: 18px;
+
+        }
+        #map {
+            width: 120%;
+            height: 130px;
+            border-radius: 12px;
+            border: 3px solid #050005; /* Green border */
+            margin-bottom: 20px;
+        }
+
+        .weather-info {
+    background: rgba(0, 128, 0, 0.7); /* Green background with transparency */
+    color: white; /* White text for contrast */
+    padding: 15px;
+    border-radius: 10px;
+    border: 3px solid #74f342; /* Bright green border */
+    display: inline-block;
+    text-align: center;
+    font-size: 18px;
+    font-weight: bold;
+}
+
+
+        input {
+            width: 80%;
+            padding: 12px;
+            margin: 10px 0;
+            border: 2px solid #0c000c; /* Green border */
+            border-radius: 8px;
+            outline: none;
+            text-align: center;
+            font-size: 16px;
+        }
+
+        button {
+            padding: 12px 18px;
+            border: 2px solid #050000; /* Red border */
+            background: #90b138;
+            color: rgb(3, 0, 0);
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 16px;
+            transition: background 0.3s, border 0.3s;
+        }
+
+        button:hover {
+            background: #d64040;
+            border-color: #ff3b3b; /* Darker red on hover */
+        }
+
+        #weather {
+            margin-top: 20px;
+            font-size: 18px;
+        }
+        
+        .custom-image {
+    width: 200px;
+    height: 100px;
+    border: 5px solid rgb(0, 0, 0); /* Pink border */
+    border-radius: 10px; /* Optional: Rounded corners */
+    display: block;
+    margin: 30px auto; /* Moves the image down from the top and centers it */
+        }
+
+        /* Ensure both the map and weather box have the same width and height */
+#map, .weather-box {
+    width: 100%; /* Responsive width */
+    max-width: 500px; /* Set a max width for consistency */
+    height: 300px; /* Fixed height */
+    border-radius: 12px; /* Rounded corners */
+    box-sizing: border-box; /* Prevents size issues with padding */
+}
+
+/* Ensure the container keeps everything aligned */
+.container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    width: 100%;
+    max-width: 500px;
+    padding: 20px;
+}
+
+/* Make sure the input and button are aligned properly */
+input, button {
+    width: 80%;
+    max-width: 400px; /* Prevents them from being too wide */
+}
+
+
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div id="map"></div>
+        <div class="weather-box">
+            <h1>Weather-Weather Nalang</h1>
+            <img src="fail.jpg" alt="Description" class="custom-image">
+            <input type="text" id="city" placeholder="Enter city name">
+            <button onclick="getWeather()">Get Weather</button>
+            <div id="weather"></div>
+        </div>
+    </div>
+    <script>
+        let map = L.map('map').setView([20, 0], 2);
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '&copy; OpenStreetMap contributors'
+        }).addTo(map);
+    
+        async function getWeather() {
+            const city = document.getElementById("city").value.trim();
+            if (city === "") return;
+    
+            const apiKey = "9c7316255b9580dbcd4987a819403fdf";
+            const url = `https://api.openweathermap.org/data/2.5/weather?q=${city}&appid=${apiKey}&units=metric`;
+    
+            try {
+                const response = await fetch(url);
+                const data = await response.json();
+    
+                if (data.cod !== 200) {
+                    document.getElementById("weather").innerHTML = `<p>City not found.</p>`;
+                    return;
+                }
+    
+                const { lat, lon } = data.coord;
+                const country = data.sys.country;
+                const weatherMain = data.weather[0].main.toLowerCase();
+                const flagUrl = `https://flagcdn.com/w320/${country.toLowerCase()}.png`;
+    
+                const weatherIcons = {
+                    rain: "🌧️",
+                    clear: "☀️",
+                    clouds: "☁️",
+                    default: "🌡️"
+                };
+    
+                const weatherIcon = weatherIcons[weatherMain] || weatherIcons.default;
+    
+                document.getElementById("weather").innerHTML = `
+                    <p><strong>${data.name}, ${country}</strong></p>
+                    <p>Temperature: ${data.main.temp}°C</p>
+                    <p>Weather: ${data.weather[0].description} ${weatherIcon}</p>
+                    <img src="${flagUrl}" alt="Flag of ${country}" width="100">
+                `;
+    
+                map.setView([lat, lon], 10);
+                L.marker([lat, lon]).addTo(map).bindPopup(`${data.name}`).openPopup();
+            } catch (error) {
+                document.getElementById("weather").innerHTML = `<p>Error fetching data.</p>`;
+            }
+        }
+    
+        document.getElementById("city").addEventListener("keypress", function (event) {
+            if (event.key === "Enter") {
+                getWeather();
+            }
+        });
+    </script>
+</body>
+</html>
